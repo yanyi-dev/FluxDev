@@ -43,6 +43,11 @@ export const demoGenerate = inngest.createFunction(
       return await generateText({
         model: deepseek(),
         prompt: finalPrompt,
+        experimental_telemetry: {
+          isEnabled: true,
+          recordInputs: true,
+          recordOutputs: true,
+        },
       });
     });
   },
