@@ -1,13 +1,7 @@
-"use client";
+import { ProjectView } from "@/feature/projects/components/projects-view";
 
-import { Button } from "@/components/ui/button";
-
-const x = () => {
-  const handle = async () => {
-    const text = await fetch("/api/demo", { method: "POST" });
-    console.log(text);
-  };
-  return <Button onClick={handle}>hello</Button>;
+const Home = () => {
+  return <ProjectView />;
 };
 
-export default x;
+export default Home;
