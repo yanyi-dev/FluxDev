@@ -27,7 +27,7 @@ const RenameInput = ({
   };
   return (
     <div
-      className="w-full flex items-center gap-1 h-5.5 bg-accent/30"
+      className="w-full flex items-center gap-1 h-5.5 bg-accent/30 overflow-hidden"
       style={{ paddingLeft: getItemPadding(level, type === "file") }}
     >
       <div className="flex items-center gap-0.5">
@@ -51,7 +51,7 @@ const RenameInput = ({
         type="text"
         value={value}
         onChange={(e) => setValue(e.target.value)}
-        className="flex-1 bg-transparent text-sm outline-none focus:ring-1 focus:ring-inset focus:ring-ring"
+        className="flex-1 min-w-0 bg-transparent text-sm outline-none focus:ring-1 focus:ring-inset focus:ring-ring"
         onBlur={handleSubmit}
         onKeyDown={(e) => {
           if (e.key === "Enter") {
