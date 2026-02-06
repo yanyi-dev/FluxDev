@@ -25,4 +25,20 @@ export default defineSchema({
     ),
     exportRepoUrl: v.optional(v.string()),
   }).index("by_owner", ["ownerId"]),
+
+  // 业务逻辑上，文件夹，文件，二进制文件互斥
+  // 实际上，定义是糅合在一起了的
+  // 注意在后端逻辑中区分
+  files: defineTable({
+    name: v.string(),
+    type: v.union(v.literal("file"), v.literal("folder")),
+    updatedAt: v.number(),
+    projectId: v.id("projects"),
+    parentId: v.optional(v.id("files")),
+    content: v.optional(v.string()),
+    storageId: v.optional(v.id("_storage")),
+  })
+    .index("by_project", ["projectId"])
+    .index("by_parent", ["parentId"])
+    .index("by_project_parent", ["projectId", "parentId"]),
 });
