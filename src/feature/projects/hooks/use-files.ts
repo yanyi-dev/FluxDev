@@ -2,8 +2,21 @@ import { useMutation, useQuery } from "convex/react";
 import { Id } from "../../../../convex/_generated/dataModel";
 import { api } from "../../../../convex/_generated/api";
 
+// 声明式查询，随组件渲染一直进行，所以可能有null的情况，需跳过处理
+export const useFile = (fileId: Id<"files"> | null) => {
+  return useQuery(api.files.getFile, fileId ? { id: fileId } : "skip");
+};
+
+export const useFilePath = (fileId: Id<"files"> | null) => {
+  return useQuery(api.files.getFilePath, fileId ? { id: fileId } : "skip");
+};
+
 export const useCreateFile = () => {
   return useMutation(api.files.createFile);
+};
+
+export const useUpdateFile = () => {
+  return useMutation(api.files.updateFile);
 };
 
 export const useRenameFile = () => {

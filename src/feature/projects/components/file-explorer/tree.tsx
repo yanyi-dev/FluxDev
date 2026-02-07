@@ -14,6 +14,7 @@ import {
   useRenameFile,
   useDeleteFile,
 } from "@/feature/projects/hooks/use-files";
+import { useEditor } from "@/feature/editor/hooks/use-editor";
 
 import LoadingRow from "./loading-row";
 import CreateInput from "./create-input";
@@ -39,6 +40,8 @@ const Tree = ({
   const createFolder = useCreateFolder();
   const renameFile = useRenameFile();
   const deleteFile = useDeleteFile();
+
+  const { openFile, closeTab, activeTabId } = useEditor(projectId);
 
   const folderContents = useFolderContents({
     projectId,
@@ -78,6 +81,7 @@ const Tree = ({
 
   if (item.type === "file") {
     const fileName = item.name;
+    const isActive = activeTabId === item._id;
 
     if (isRenaming) {
       return (
@@ -95,12 +99,12 @@ const Tree = ({
       <TreeItemWrapper
         item={item}
         level={level}
-        isActive={false}
-        onClick={() => {}}
-        onDoubleClick={() => {}}
+        isActive={isActive}
+        onClick={() => openFile(item._id, { pinned: false })}
+        onDoubleClick={() => openFile(item._id, { pinned: true })}
         onRename={() => setIsRenaming(true)}
         onDelete={() => {
-          // TODO: 删除对应标签页
+          closeTab(item._id);
           deleteFile({ id: item._id });
         }}
       >

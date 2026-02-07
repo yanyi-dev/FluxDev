@@ -2,7 +2,7 @@ import { v } from "convex/values";
 
 import { query, mutation } from "./_generated/server";
 import { verifyAuth } from "./auth";
-import { Id } from "./_generated/dataModel";
+import { Doc, Id } from "./_generated/dataModel";
 
 // 获取项目下所有内容
 export const getFiles = query({
@@ -41,6 +41,39 @@ export const getFile = query({
       throw new Error("Unauthorized access to this project");
 
     return file;
+  },
+});
+
+// 获取文件路径，返回的是一个文件数组{ _id: string; name: string }[]
+// 获取路径逻辑可优化
+export const getFilePath = query({
+  args: { id: v.id("files") },
+  handler: async (ctx, args) => {
+    const identity = await verifyAuth(ctx);
+
+    const file = await ctx.db.get(args.id);
+
+    if (!file) throw new Error("File not found");
+
+    const project = await ctx.db.get("projects", file.projectId);
+
+    if (!project) throw new Error("project not found");
+
+    if (project.ownerId !== identity.subject)
+      throw new Error("Unauthorized access to this project");
+
+    const path: { _id: string; name: string }[] = [];
+    let currentId: Id<"files"> | undefined = args.id;
+    while (currentId) {
+      const file = (await ctx.db.get(
+        "files",
+        currentId,
+      )) as Doc<"files"> | null;
+      if (!file) break;
+      path.unshift({ _id: file._id, name: file.name });
+      currentId = file.parentId;
+    }
+    return path;
   },
 });
 

@@ -25,7 +25,7 @@ import {
 
 const FileExplorer = ({ projectId }: { projectId: Id<"projects"> }) => {
   // 打开项目
-  const [isOpen, setIsOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(true);
   // 折叠项目下所有文件夹
   const [collapseKey, setCollapseKey] = useState(0);
   // 创建文件或文件夹
