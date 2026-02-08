@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef } from "react";
 
 import { minimap } from "../extensions/minimap";
 import { customTheme } from "../extensions/theme";
+import { suggestion } from "../extensions/suggestion";
 import { customSetup } from "../extensions/custom-setup";
 import { getLanguageExtension } from "../extensions/language-extension";
 
@@ -44,6 +45,7 @@ const CodeEditor = ({
         customTheme,
         customSetup,
         languageExtension,
+        suggestion(filename),
         minimap(),
         indentationMarkers(),
         keymap.of([indentWithTab]),
