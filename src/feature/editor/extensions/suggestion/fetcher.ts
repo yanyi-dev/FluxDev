@@ -1,6 +1,5 @@
 import ky from "ky";
 import { z } from "zod";
-import { toast } from "sonner";
 
 const suggestionRequestSchema = z.object({
   fileName: z.string(),
@@ -36,12 +35,7 @@ export const fetcher = async (
     const validatedResponse = suggestionResponseSchema.parse(response);
 
     return validatedResponse.suggestion || null;
-  } catch (error) {
-    if (error instanceof Error && error.name === "AbortError") {
-      console.log("🛑 Request was aborted!");
-      return null;
-    }
-    toast.error("Failed to fetch AI completion");
+  } catch {
     return null;
   }
 };

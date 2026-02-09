@@ -7,7 +7,7 @@ import {
   WidgetType,
   keymap,
 } from "@codemirror/view";
-import { StateEffect, StateField } from "@codemirror/state";
+import { StateEffect, StateField, Transaction } from "@codemirror/state";
 
 import { fetcher } from "./fetcher";
 
@@ -88,12 +88,28 @@ const generatePayload = (view: EditorView, fileName: string) => {
 const createDebouncePlugin = (fileNmae: string) => {
   return ViewPlugin.fromClass(
     class {
-      constructor(view: EditorView) {
-        this.triggerSuggestion(view);
-      }
-
+      // 状态更新时调用update
       update(update: ViewUpdate) {
-        if (update.docChanged || update.selectionSet) {
+        if (update.selectionSet && !update.docChanged) {
+          const currentSuggestion = update.state.field(suggestionState);
+          if (currentSuggestion) {
+            // 先更新状态，再清空建议
+            setTimeout(() => {
+              update.view.dispatch({
+                effects: setSuggestionEffect.of(null),
+              });
+            }, 0);
+          }
+        }
+
+        if (update.docChanged) {
+          // 如果是quickEdit，则跳过本次补全
+          const isQuickEdit = update.transactions.some(
+            (tr) => tr.annotation(Transaction.userEvent) === "quick-edit",
+          );
+
+          if (isQuickEdit) return;
+
           this.triggerSuggestion(update.view);
         }
       }
