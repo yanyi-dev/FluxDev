@@ -41,4 +41,29 @@ export default defineSchema({
     .index("by_project", ["projectId"])
     .index("by_parent", ["parentId"])
     .index("by_project_parent", ["projectId", "parentId"]),
+
+  // 即一个对话，一个项目多个对话
+  conversations: defineTable({
+    projectId: v.id("projects"),
+    title: v.string(),
+    updatedAt: v.number(),
+  }).index("by_project", ["projectId"]),
+
+  // 即一条消息，一个对话多条消息
+  // 可以是用户发出的，也可以是ai发出的
+  messages: defineTable({
+    conversationsId: v.id("conversations"),
+    projectId: v.id("projects"),
+    role: v.union(v.literal("user"), v.literal("assistant")),
+    content: v.string(),
+    status: v.optional(
+      v.union(
+        v.literal("processing"),
+        v.literal("completed"),
+        v.literal("cancelled"),
+      ),
+    ),
+  })
+    .index("by_conversation", ["conversationsId"])
+    .index("by_project_status", ["projectId", "status"]),
 });
