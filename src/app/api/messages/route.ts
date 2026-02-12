@@ -55,7 +55,33 @@ export async function POST(request: Request) {
 
   const projectId = conversation.projectId;
 
-  //Todo: 检查是否已经有正在进行的对话，有就停止发送
+  // 找到所有正在进行的对话进行取消
+  const processingMessages = await convex.query(
+    api.system.getProcessingMessages,
+    {
+      internalKey,
+      projectId: projectId as Id<"projects">,
+    },
+  );
+
+  if (processingMessages.length > 0) {
+    await Promise.all(
+      processingMessages.map(async (msg) => {
+        await inngest.send({
+          name: "message/cancel",
+          data: {
+            messageId: msg._id,
+          },
+        });
+
+        await convex.mutation(api.system.updateMessageStatus, {
+          internalKey,
+          messageId: msg._id,
+          status: "cancelled",
+        });
+      }),
+    );
+  }
 
   // 保存用户对话
   await convex.mutation(api.system.createMessage, {
@@ -76,7 +102,6 @@ export async function POST(request: Request) {
     status: "processing",
   });
 
-  // Todo: 调用inngest去处理message
   const event = await inngest.send({
     name: "message/sent",
     data: {
@@ -89,7 +114,7 @@ export async function POST(request: Request) {
 
   return NextResponse.json({
     success: true,
-    eventId: event.ids[0], // Todo: 使用inngest的event id
+    eventId: event.ids[0],
     messageId: assistantMessageId,
   });
 }

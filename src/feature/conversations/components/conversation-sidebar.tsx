@@ -36,7 +36,8 @@ import {
 } from "../hooks/use-conversations";
 
 import { Id } from "../../../../convex/_generated/dataModel";
-import { DEFAULT_CONVERSATION_TITLE } from "../../../../convex/constants";
+import { DEFAULT_CONVERSATION_TITLE } from "../constants";
+import { PastConversationsDialog } from "./past-conversations-dialog";
 
 interface ConversationSidebarProps {
   projectId: Id<"projects">;
@@ -46,6 +47,7 @@ const ConversationSidebar = ({ projectId }: ConversationSidebarProps) => {
   const [input, setInput] = useState("");
   const [selectedConversationId, setSelectedConversationId] =
     useState<Id<"conversations"> | null>(null);
+  const [pastConversationOpen, setPastConversationOpen] = useState(false);
 
   const createConversation = useCreateConversation();
   const conversations = useConversations(projectId);
@@ -59,6 +61,18 @@ const ConversationSidebar = ({ projectId }: ConversationSidebarProps) => {
   const isProcessing = conversationMessages?.some(
     (message) => message.status === "processing",
   );
+
+  const handleCancel = async () => {
+    try {
+      await ky.post("/api/messages/cancel", {
+        json: {
+          projectId,
+        },
+      });
+    } catch {
+      toast.error("Unable to cancel request");
+    }
+  };
 
   const hanldeCreateConversation = async () => {
     try {
@@ -75,12 +89,15 @@ const ConversationSidebar = ({ projectId }: ConversationSidebarProps) => {
   };
 
   const hanldeSubmit = async (message: PromptInputMessage) => {
+    // 终止功能，输入为空且已经有处理的消息的时候，调用取消接口
     if (isProcessing && !message.text) {
+      await handleCancel();
       setInput("");
       return;
     }
 
-    //Todo: 输入为空的时候看有没有必要也直接返回
+    // 空字符串就直接返回
+    if (!message.text?.trim()) return;
 
     let conversationId = activeConversationId;
     if (!conversationId) {
@@ -103,79 +120,95 @@ const ConversationSidebar = ({ projectId }: ConversationSidebarProps) => {
   };
 
   return (
-    <div className="flex flex-col h-full bg-sidebar">
-      <div className="h-8.75 flex items-center justify-between border-b">
-        <div className="text-sm truncate pl-3">
-          {activeConversation?.title ?? DEFAULT_CONVERSATION_TITLE}
+    <>
+      <PastConversationsDialog
+        projectId={projectId}
+        open={pastConversationOpen}
+        onOpenChange={setPastConversationOpen}
+        onSelect={setSelectedConversationId}
+      />
+      <div className="flex flex-col h-full bg-sidebar">
+        <div className="h-8.75 flex items-center justify-between border-b">
+          <div className="text-sm truncate pl-3">
+            {activeConversation?.title ?? DEFAULT_CONVERSATION_TITLE}
+          </div>
+          <div className="flex items-center px-1 gap-1">
+            <Button
+              size="icon-xss"
+              variant="highlight"
+              onClick={() => setPastConversationOpen(true)}
+            >
+              <HistoryIcon className="size-3.5" />
+            </Button>
+            <Button
+              size="icon-xss"
+              variant="highlight"
+              onClick={hanldeCreateConversation}
+            >
+              <PlusIcon className="size-3.5" />
+            </Button>
+          </div>
         </div>
-        <div className="flex items-center px-1 gap-1">
-          <Button size="icon-xss" variant="highlight">
-            <HistoryIcon className="size-3.5" />
-          </Button>
-          <Button
-            size="icon-xss"
-            variant="highlight"
-            onClick={hanldeCreateConversation}
-          >
-            <PlusIcon className="size-3.5" />
-          </Button>
+        <Conversation className="flex-1">
+          <ConversationContent>
+            {conversationMessages?.map((message) => (
+              <Message key={message._id} from={message.role}>
+                <MessageContent>
+                  {message.status === "processing" ? (
+                    <div className="flex items-center gap-2 text-muted-foreground">
+                      <LoaderIcon className="size-4 animate-spin" />{" "}
+                      <span>Thinking...</span>
+                    </div>
+                  ) : message.status === "cancelled" ? (
+                    <span className="text-muted-foreground italic pr-0.5">
+                      Request cancelled
+                    </span>
+                  ) : (
+                    <MessageResponse>{message.content}</MessageResponse>
+                  )}
+                </MessageContent>
+                {message.role === "assistant" &&
+                  message.status === "completed" && (
+                    <MessageActions className="opacity-0 group-hover:opacity-100 transition-opacity">
+                      <MessageAction
+                        onClick={() =>
+                          navigator.clipboard.writeText(message.content)
+                        }
+                        label="Copy"
+                      >
+                        <CopyIcon className="size-3" />
+                      </MessageAction>
+                    </MessageActions>
+                  )}
+              </Message>
+            ))}
+          </ConversationContent>
+          <ConversationScrollButton />
+        </Conversation>
+        <div className="p-3">
+          <PromptInput onSubmit={hanldeSubmit} className="mt-2.5">
+            <PromptInputBody>
+              <PromptInputTextarea
+                placeholder="Ask FluxDev anything..."
+                onChange={(e) => {
+                  setInput(e.target.value);
+                }}
+                value={input}
+                disabled={isProcessing}
+              />
+            </PromptInputBody>
+            <PromptInputFooter>
+              <PromptInputTools />
+              <PromptInputSubmit
+                disabled={isProcessing ? false : !input}
+                // status为streaming的时候显示终止按钮
+                status={isProcessing ? "streaming" : undefined}
+              />
+            </PromptInputFooter>
+          </PromptInput>
         </div>
       </div>
-      <Conversation className="flex-1">
-        <ConversationContent>
-          {conversationMessages?.map((message, messageIndex) => (
-            <Message key={message._id} from={message.role}>
-              <MessageContent>
-                {message.status === "processing" ? (
-                  <div className="flex items-center gap-2 text-muted-foreground">
-                    <LoaderIcon className="size-4 animate-spin" />{" "}
-                    <span>Thinking...</span>
-                  </div>
-                ) : (
-                  <MessageResponse>{message.content}</MessageResponse>
-                )}
-              </MessageContent>
-              {message.role === "assistant" &&
-                message.status === "completed" && (
-                  <MessageActions className="opacity-0 group-hover:opacity-100 transition-opacity">
-                    <MessageAction
-                      onClick={() =>
-                        navigator.clipboard.writeText(message.content)
-                      }
-                      label="Copy"
-                    >
-                      <CopyIcon className="size-3" />
-                    </MessageAction>
-                  </MessageActions>
-                )}
-            </Message>
-          ))}
-        </ConversationContent>
-        <ConversationScrollButton />
-      </Conversation>
-      <div className="p-3">
-        <PromptInput onSubmit={hanldeSubmit} className="mt-2.5">
-          <PromptInputBody>
-            <PromptInputTextarea
-              placeholder="Ask FluxDev anything..."
-              onChange={(e) => {
-                setInput(e.target.value);
-              }}
-              value={input}
-              disabled={isProcessing}
-            />
-          </PromptInputBody>
-          <PromptInputFooter>
-            <PromptInputTools />
-            <PromptInputSubmit
-              disabled={isProcessing ? false : !input}
-              // status为streaming的时候显示终止按钮
-              status={isProcessing ? "streaming" : undefined}
-            />
-          </PromptInputFooter>
-        </PromptInput>
-      </div>
-    </div>
+    </>
   );
 };
 
