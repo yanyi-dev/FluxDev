@@ -24,6 +24,12 @@ export default defineSchema({
       ),
     ),
     exportRepoUrl: v.optional(v.string()),
+    settings: v.optional(
+      v.object({
+        installCommand: v.optional(v.string()),
+        devCommand: v.optional(v.string()),
+      }),
+    ),
   }).index("by_owner", ["ownerId"]),
 
   // 业务逻辑上，文件夹，文件，二进制文件互斥
