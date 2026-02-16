@@ -65,6 +65,12 @@ export const useWebContainer = ({
     if (!enabled || !files || files.length === 0 || hasStartedRef.current)
       return;
 
+    // 保证导入的时候有必须的文件存在才启动
+    const hasPackageJson = files.some(
+      (f) => f.name === "package.json" && !f.parentId,
+    );
+    if (!hasPackageJson) return;
+
     hasStartedRef.current = true;
     const abortController = new AbortController();
 
@@ -83,6 +89,24 @@ export const useWebContainer = ({
 
         const fileTree = buildFileTree(files);
         await container.mount(fileTree);
+
+        // 挂载二进制文件
+        const filesMap = new Map(files.map((f) => [f._id, f]));
+        const binaryFiles = files.filter(
+          (f) => f.type === "file" && f.storageId,
+        );
+        await Promise.all(
+          binaryFiles.map(async (file) => {
+            // 拿到 storageUrl
+            if (!file.storageUrl) {
+              return;
+            }
+            const response = await fetch(file.storageUrl);
+            const buffer = await response.arrayBuffer();
+            const filePath = getFilePath(file, filesMap);
+            await container.fs.writeFile(filePath, new Uint8Array(buffer));
+          }),
+        );
 
         // 注册监听server-ready时间的回调函数
         container.on("server-ready", (_port, url) => {

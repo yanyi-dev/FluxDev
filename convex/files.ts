@@ -17,10 +17,18 @@ export const getFiles = query({
     if (project.ownerId !== identity.subject)
       throw new Error("Unauthorized access to this project");
 
-    return ctx.db
+    const files = await ctx.db
       .query("files")
       .withIndex("by_project", (q) => q.eq("projectId", args.projectId))
       .collect();
+    return Promise.all(
+      files.map(async (file) => ({
+        ...file,
+        storageUrl: file.storageId
+          ? await ctx.storage.getUrl(file.storageId)
+          : null,
+      })),
+    );
   },
 });
 

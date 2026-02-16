@@ -33,6 +33,26 @@ export const PreviewView = ({ projectId }: { projectId: Id<"projects"> }) => {
 
   const isLoading = status === "booting" || status === "installing";
 
+  if (
+    project?.importStatus === "importing" ||
+    project?.importStatus === "failed"
+  ) {
+    return (
+      <div className="h-full flex flex-col bg-background">
+        <div className="h-8.75 flex items-center border-b bg-sidebar shrink-0">
+          <div className="flex-1 h-full flex items-center px-3 bg-background border-x text-xs text-muted-foreground truncate font-mono">
+            <div className="flex items-center gap-1.5">
+              <Loader2Icon className="size-3 animate-spin" />
+              {project?.importStatus === "importing"
+                ? `Project - ${project.name} is importing`
+                : `Project - ${project.name} import failed`}
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="h-full flex flex-col bg-background">
       <div className="h-8.75 flex items-center border-b bg-sidebar shrink-0">
