@@ -40,7 +40,7 @@ export const getFile = query({
 
     const file = await ctx.db.get(args.id);
 
-    if (!file) throw new Error("File not found");
+    if (!file) return;
 
     const project = await ctx.db.get("projects", file.projectId);
 
@@ -61,7 +61,7 @@ export const getFilePath = query({
 
     const file = await ctx.db.get(args.id);
 
-    if (!file) throw new Error("File not found");
+    if (!file) return;
 
     const project = await ctx.db.get("projects", file.projectId);
 
@@ -323,7 +323,7 @@ export const updateFile = mutation({
 
     const file = await ctx.db.get("files", args.id);
 
-    if (!file) throw new Error("Item not found");
+    if (!file) return;
 
     if (file.type !== "file" || file.storageId) {
       throw new Error("Can only update content of text files");

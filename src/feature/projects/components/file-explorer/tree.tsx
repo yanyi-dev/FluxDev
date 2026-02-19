@@ -201,7 +201,6 @@ const Tree = ({
         onClick={() => setIsOpen((isOpen) => !isOpen)}
         onRename={() => setIsRenaming(true)}
         onDelete={() => {
-          // TODO: 删除对应标签页
           deleteFile({ id: item._id });
         }}
         onCreateFile={() => {

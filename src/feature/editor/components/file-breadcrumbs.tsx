@@ -39,7 +39,7 @@ const FileBreadCrumbs = ({ projectId }: { projectId: Id<"projects"> }) => {
     <div className="p-2 bg-background pl-4 border-b">
       <Breadcrumb>
         <BreadcrumbList className="sm:gap-0.5 gap-0.5">
-          {filePath.map((item, index) => {
+          {filePath?.map((item, index) => {
             const isLast = index === filePath.length - 1;
 
             return (
