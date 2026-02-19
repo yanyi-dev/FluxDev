@@ -104,3 +104,26 @@ export const rename = mutation({
     });
   },
 });
+
+export const remove = mutation({
+  args: { id: v.id("projects") },
+  handler: async (ctx, args) => {
+    const identity = await verifyAuth(ctx);
+    const project = await ctx.db.get(args.id);
+    if (!project) throw new Error("Project not found");
+    if (project.ownerId !== identity.subject) {
+      throw new Error("Unauthorized");
+    }
+    const files = await ctx.db
+      .query("files")
+      .withIndex("by_project", (q) => q.eq("projectId", args.id))
+      .collect();
+    for (const file of files) {
+      if (file.storageId) {
+        await ctx.storage.delete(file.storageId);
+      }
+      await ctx.db.delete(file._id);
+    }
+    await ctx.db.delete(args.id);
+  },
+});

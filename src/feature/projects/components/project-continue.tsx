@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowRightIcon } from "lucide-react";
+import { ArrowRightIcon, TrashIcon } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 
@@ -7,8 +7,11 @@ import { formatTimestamp } from "../utils/formatTime";
 import { getProjectIcon } from "../utils/getProjectIcon";
 
 import { Doc } from "../../../../convex/_generated/dataModel";
+import { useDeleteProject } from "../hooks/use-projects";
 
 export const ContinueCard = ({ data }: { data: Doc<"projects"> }) => {
+  const deleteProject = useDeleteProject();
+
   return (
     <div className="flex flex-col gap-2">
       <span className="text-xs text-muted-foreground">Last updated</span>
@@ -25,9 +28,21 @@ export const ContinueCard = ({ data }: { data: Doc<"projects"> }) => {
             </div>
             <ArrowRightIcon className="size-4 text-muted-foreground group-hover:translate-x-0.5 transition-transform" />
           </div>
-          <span className="text-xs text-muted-foreground">
-            {formatTimestamp(data.updatedAt)}
-          </span>
+          <div className="flex items-center justify-between w-full">
+            <span className="text-xs text-muted-foreground">
+              {formatTimestamp(data.updatedAt)}
+            </span>
+            <button
+              className="p-1 hover:text-destructive"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                deleteProject(data._id);
+              }}
+            >
+              <TrashIcon className="size-4" />
+            </button>
+          </div>
         </Link>
       </Button>
     </div>

@@ -4,6 +4,8 @@ import { api } from "../../../../convex/_generated/api";
 import { useMutation, useQuery } from "convex/react";
 import { Id } from "../../../../convex/_generated/dataModel";
 
+import { toast } from "sonner";
+
 export const useProject = (id: Id<"projects">) => {
   return useQuery(api.projects.getById, { id });
 };
@@ -104,4 +106,18 @@ export const useRenameProject = () => {
 
 export const useUpdateProjectSettings = () => {
   return useMutation(api.projects.updateSettings);
+};
+
+export const useDeleteProject = () => {
+  const mutation = useMutation(api.projects.remove);
+
+  const deleteProject = async (id: Id<"projects">) => {
+    try {
+      await mutation({ id });
+      toast.success("Project deleted");
+    } catch {
+      toast.error("Failed to delete project, please try again");
+    }
+  };
+  return deleteProject;
 };

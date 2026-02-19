@@ -15,9 +15,10 @@ import { PreviewSettingsPopover } from "@/feature/preview/components/preview-set
 
 import { Button } from "@/components/ui/button";
 
-import { useProject } from "../hooks/use-projects";
+import { useDeleteProject, useProject } from "../hooks/use-projects";
 
 import { Id } from "../../../../convex/_generated/dataModel";
+import { useRouter } from "next/navigation";
 
 export const PreviewView = ({ projectId }: { projectId: Id<"projects"> }) => {
   const project = useProject(projectId);
@@ -33,10 +34,26 @@ export const PreviewView = ({ projectId }: { projectId: Id<"projects"> }) => {
 
   const isLoading = status === "booting" || status === "installing";
 
-  if (
-    project?.importStatus === "importing" ||
-    project?.importStatus === "failed"
-  ) {
+  const deleteProject = useDeleteProject();
+  const router = useRouter();
+  if (project?.importStatus === "failed") {
+    return (
+      <div className="h-full flex flex-col items-center justify-center gap-4">
+        <div className="text-muted-foreground">Project import failed.</div>
+        <Button
+          variant="destructive"
+          onClick={() => {
+            router.push("/");
+            deleteProject(projectId);
+          }}
+        >
+          Back to Home Page & Delete Project
+        </Button>
+      </div>
+    );
+  }
+
+  if (project?.importStatus === "importing") {
     return (
       <div className="h-full flex flex-col bg-background">
         <div className="h-8.75 flex items-center border-b bg-sidebar shrink-0">
