@@ -30,7 +30,9 @@ export default defineSchema({
         devCommand: v.optional(v.string()),
       }),
     ),
-  }).index("by_owner", ["ownerId"]),
+  })
+    .index("by_owner", ["ownerId"])
+    .index("by_owner_updated", ["ownerId", "updatedAt"]),
 
   // 业务逻辑上，文件夹，文件，二进制文件互斥
   // 实际上，定义是糅合在一起了的
