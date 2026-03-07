@@ -1,11 +1,15 @@
 import { Tooltip, showTooltip, EditorView } from "@codemirror/view";
 import { StateField, EditorState } from "@codemirror/state";
 import { showQuickEditEffect, quickEditState } from "./quick-edit";
+import { useChatStore } from "../../conversations/store/use-chat-store";
 
 let editorView: EditorView | null = null;
 
 // 选项菜单悬浮窗
-const createTooltipForSelection = (state: EditorState): readonly Tooltip[] => {
+const createTooltipForSelection = (
+  state: EditorState,
+  filename: string,
+): readonly Tooltip[] => {
   const selection = state.selection.main;
 
   if (selection.empty) {
@@ -31,6 +35,19 @@ const createTooltipForSelection = (state: EditorState): readonly Tooltip[] => {
         addToChatButton.textContent = "Add to Chat";
         addToChatButton.className =
           "font-sans p-1 px-2 hover:bg-foreground/10 rounded-sm";
+
+        addToChatButton.onclick = () => {
+          if (editorView) {
+            const { from, to } = editorView.state.selection.main;
+            const selectedText = editorView.state.sliceDoc(from, to);
+            const snippet = `[${filename}]\n\`\`\`\n${selectedText}\n\`\`\``;
+            useChatStore.getState().appendSnippet(snippet);
+            editorView.dispatch({
+              selection: { anchor: to },
+              scrollIntoView: true,
+            });
+          }
+        };
 
         const quickEditButton = document.createElement("button");
         quickEditButton.className =
@@ -63,32 +80,33 @@ const createTooltipForSelection = (state: EditorState): readonly Tooltip[] => {
   ];
 };
 
-const selectionTooltipField = StateField.define<readonly Tooltip[]>({
-  create(state) {
-    return createTooltipForSelection(state);
-  },
+const createSelectionTooltipField = (filename: string) =>
+  StateField.define<readonly Tooltip[]>({
+    create(state) {
+      return createTooltipForSelection(state, filename);
+    },
 
-  update(tooltips, transaction) {
-    if (transaction.docChanged || transaction.selection) {
-      return createTooltipForSelection(transaction.state);
-    }
-    for (const effect of transaction.effects) {
-      if (effect.is(showQuickEditEffect)) {
-        return createTooltipForSelection(transaction.state);
+    update(tooltips, transaction) {
+      if (transaction.docChanged || transaction.selection) {
+        return createTooltipForSelection(transaction.state, filename);
       }
-    }
-    return tooltips;
-  },
+      for (const effect of transaction.effects) {
+        if (effect.is(showQuickEditEffect)) {
+          return createTooltipForSelection(transaction.state, filename);
+        }
+      }
+      return tooltips;
+    },
 
-  provide: (field) =>
-    showTooltip.computeN([field], (state) => state.field(field)),
-});
+    provide: (field) =>
+      showTooltip.computeN([field], (state) => state.field(field)),
+  });
 
 const captureViewExtension = EditorView.updateListener.of((update) => {
   editorView = update.view;
 });
 
-export const selectionTooltip = () => [
-  selectionTooltipField,
+export const selectionTooltip = (filename: string) => [
+  createSelectionTooltipField(filename),
   captureViewExtension,
 ];

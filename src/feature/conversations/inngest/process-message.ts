@@ -5,10 +5,7 @@ import { Id } from "../../../../convex/_generated/dataModel";
 import { NonRetriableError } from "inngest";
 import { convex } from "@/lib/convex-client";
 import { api } from "../../../../convex/_generated/api";
-import {
-  CODING_AGENT_SYSTEM_PROMPT,
-  TITLE_GENERATOR_SYSTEM_PROMPT,
-} from "./constants";
+import { CODING_AGENT_SYSTEM_PROMPT } from "./constants";
 import { DEFAULT_CONVERSATION_TITLE } from "../constants";
 import { createReadFilesTool } from "./tools/read-files";
 import { createListFilesTool } from "./tools/list-files";
@@ -107,51 +104,13 @@ export const processMessage = inngest.createFunction(
       conversation.title === DEFAULT_CONVERSATION_TITLE;
 
     if (shouldGenerateTitle) {
-      const titlePrompt = TITLE_GENERATOR_SYSTEM_PROMPT.replace(
-        "{message}",
-        message,
-      );
-
-      const titleAgent = createAgent({
-        name: "title-generator",
-        system: titlePrompt,
-        model: openai({
-          baseUrl: process.env.AGENT_BASE_URL,
-          model:
-            process.env.AGENT_TITLE_GENERATE_MODEL ??
-            "deepseek-ai/DeepSeek-R1-0528-Qwen3-8B",
-          apiKey: process.env.AGENT_API_KEY,
-        }),
+      await step.sendEvent("trigger-title-generation", {
+        name: "conversation/generate-title",
+        data: {
+          conversationId,
+          message,
+        },
       });
-
-      // { step }参数基于agent断点调用的能力
-      const { output } = await titleAgent.run(message, { step });
-
-      // 过滤可能的多余内容，比如思考内容
-      const textMessage = output.find(
-        (m) => m.type === "text" && m.role === "assistant",
-      );
-
-      if (textMessage?.type === "text") {
-        // content可能是字符串，也可能是字符数组
-        const title =
-          typeof textMessage.content === "string"
-            ? textMessage.content.trim()
-            : textMessage.content
-                .map((c) => c.text)
-                .join("")
-                .trim();
-
-        if (title) {
-          await step.run("update-conversation-title", async () => {
-            await convex.mutation(api.system.updateConversationTitle, {
-              internalKey,
-              conversationId,
-              title,
-            });
-          });
-        }
-      }
     }
 
     // 创建编码agent助手(普通对话也通过这里回复)

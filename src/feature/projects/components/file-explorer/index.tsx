@@ -22,6 +22,7 @@ import {
   useCreateFolder,
   useFolderContents,
 } from "../../hooks/use-files";
+import { toast } from "sonner";
 
 const FileExplorer = ({ projectId }: { projectId: Id<"projects"> }) => {
   // 打开项目
@@ -40,9 +41,13 @@ const FileExplorer = ({ projectId }: { projectId: Id<"projects"> }) => {
     setCreating(null);
 
     if (creating === "file") {
-      createFile({ projectId, name, content: "", parentId: undefined });
+      createFile({ projectId, name, content: "", parentId: undefined }).catch(
+        () => toast.error("文件创建失败"),
+      );
     } else {
-      createFolder({ projectId, name, parentId: undefined });
+      createFolder({ projectId, name, parentId: undefined }).catch(() =>
+        toast.error("文件夹创建失败"),
+      );
     }
   };
 

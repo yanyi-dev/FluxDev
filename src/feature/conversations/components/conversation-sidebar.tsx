@@ -38,13 +38,16 @@ import {
 import { Id } from "../../../../convex/_generated/dataModel";
 import { DEFAULT_CONVERSATION_TITLE } from "../constants";
 import { PastConversationsDialog } from "./past-conversations-dialog";
+import { useChatStore } from "../store/use-chat-store";
 
 interface ConversationSidebarProps {
   projectId: Id<"projects">;
 }
 
 const ConversationSidebar = ({ projectId }: ConversationSidebarProps) => {
-  const [input, setInput] = useState("");
+  const input = useChatStore((s) => s.input);
+  const setInput = useChatStore((s) => s.setInput);
+
   const [selectedConversationId, setSelectedConversationId] =
     useState<Id<"conversations"> | null>(null);
   const [pastConversationOpen, setPastConversationOpen] = useState(false);
@@ -55,8 +58,23 @@ const ConversationSidebar = ({ projectId }: ConversationSidebarProps) => {
   const activeConversationId =
     selectedConversationId ?? conversations?.[0]?._id ?? null;
 
-  const activeConversation = useConversation(activeConversationId);
-  const conversationMessages = useMessages(activeConversationId);
+  // 如果被选中的对话被删除了，或者当前项目下没有任何对话了
+  const isValidConversation = conversations?.some(
+    (c) => c._id === activeConversationId,
+  );
+
+  // 保证给出的 ID 至少在这个项目列表中是存在的，不然传 null 避免查询报错
+  const safeActiveConversationId = isValidConversation
+    ? activeConversationId
+    : null;
+
+  const activeConversation = useConversation(safeActiveConversationId);
+  const conversationMessages = useMessages(safeActiveConversationId);
+
+  // 如果当前选中的对话已被删除，自动将其清空
+  if (selectedConversationId && conversations && !isValidConversation) {
+    setSelectedConversationId(null);
+  }
 
   const isProcessing = conversationMessages?.some(
     (message) => message.status === "processing",
@@ -200,7 +218,7 @@ const ConversationSidebar = ({ projectId }: ConversationSidebarProps) => {
             <PromptInputFooter>
               <PromptInputTools />
               <PromptInputSubmit
-                disabled={isProcessing ? false : !input}
+                disabled={isProcessing ? false : input.trim().length === 0}
                 // status为streaming的时候显示终止按钮
                 status={isProcessing ? "streaming" : undefined}
               />

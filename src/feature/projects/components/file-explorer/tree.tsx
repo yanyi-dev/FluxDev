@@ -22,6 +22,7 @@ import RenameInput from "./rename-input";
 import { getItemPadding } from "./constants";
 import TreeItemWrapper from "./tree-item-wrapper";
 import { Doc, Id } from "../../../../../convex/_generated/dataModel";
+import { toast } from "sonner";
 
 const Tree = ({
   item,
@@ -58,7 +59,9 @@ const Tree = ({
   const handleRename = (newName: string) => {
     setIsRenaming(false);
     if (newName === item.name) return;
-    renameFile({ id: item._id, newName });
+    renameFile({ id: item._id, newName }).catch(() =>
+      toast.error("文件重命名失败"),
+    );
   };
 
   const handleCreate = (name: string) => {
@@ -70,13 +73,13 @@ const Tree = ({
         projectId,
         parentId: item._id,
         content: "",
-      });
+      }).catch(() => toast.error("文件创建失败"));
     } else {
       createFolder({
         name,
         projectId,
         parentId: item._id,
-      });
+      }).catch(() => toast.error("文件夹创建失败"));
     }
   };
 

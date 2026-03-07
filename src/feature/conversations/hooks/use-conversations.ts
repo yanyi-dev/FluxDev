@@ -24,3 +24,7 @@ export const useConversations = (projectId: Id<"projects"> | null) => {
 export const useCreateConversation = () => {
   return useMutation(api.conversations.create);
 };
+
+export const useRemoveConversation = () => {
+  return useMutation(api.conversations.remove);
+};

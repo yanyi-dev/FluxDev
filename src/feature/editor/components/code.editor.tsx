@@ -49,7 +49,7 @@ const CodeEditor = ({
         languageExtension,
         suggestion(filename),
         quickEdit(filename),
-        selectionTooltip(),
+        selectionTooltip(filename),
         minimap(),
         indentationMarkers(),
         keymap.of([indentWithTab]),
