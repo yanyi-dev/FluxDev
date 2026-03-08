@@ -42,11 +42,11 @@ const FileExplorer = ({ projectId }: { projectId: Id<"projects"> }) => {
 
     if (creating === "file") {
       createFile({ projectId, name, content: "", parentId: undefined }).catch(
-        () => toast.error("文件创建失败"),
+        () => toast.error("Fail Create File"),
       );
     } else {
       createFolder({ projectId, name, parentId: undefined }).catch(() =>
-        toast.error("文件夹创建失败"),
+        toast.error("Fail Create Folder"),
       );
     }
   };

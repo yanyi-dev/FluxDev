@@ -60,7 +60,7 @@ const Tree = ({
     setIsRenaming(false);
     if (newName === item.name) return;
     renameFile({ id: item._id, newName }).catch(() =>
-      toast.error("文件重命名失败"),
+      toast.error("Fail Rename"),
     );
   };
 
@@ -73,13 +73,13 @@ const Tree = ({
         projectId,
         parentId: item._id,
         content: "",
-      }).catch(() => toast.error("文件创建失败"));
+      }).catch(() => toast.error("Fail Create File"));
     } else {
       createFolder({
         name,
         projectId,
         parentId: item._id,
-      }).catch(() => toast.error("文件夹创建失败"));
+      }).catch(() => toast.error("Fail Create Folder"));
     }
   };
 
