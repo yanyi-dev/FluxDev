@@ -45,3 +45,27 @@ export const useEditor = (projectId: Id<"projects">) => {
     setActiveTab,
   };
 };
+
+export const useIsActiveFile = (
+  projectId: Id<"projects">,
+  fileId: Id<"files">,
+) => {
+  return useEditorStore(
+    (state) => state.getTabState(projectId).activeTabId === fileId,
+  );
+};
+
+export const useEditorActions = (projectId: Id<"projects">) => {
+  const openFileAction = useEditorStore((state) => state.openFile);
+  const closeTabAction = useEditorStore((state) => state.closeTab);
+  const openFile = useCallback(
+    (fileId: Id<"files">, options: { pinned: boolean }) =>
+      openFileAction(projectId, fileId, options),
+    [openFileAction, projectId],
+  );
+  const closeTab = useCallback(
+    (fileId: Id<"files">) => closeTabAction(projectId, fileId),
+    [closeTabAction, projectId],
+  );
+  return { openFile, closeTab };
+};

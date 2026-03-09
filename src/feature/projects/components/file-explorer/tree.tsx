@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, memo } from "react";
 
 import { ChevronRightIcon } from "lucide-react";
 import { FileIcon, FolderIcon } from "@react-symbols/icons/utils";
@@ -14,7 +14,10 @@ import {
   useRenameFile,
   useDeleteFile,
 } from "@/feature/projects/hooks/use-files";
-import { useEditor } from "@/feature/editor/hooks/use-editor";
+import {
+  useEditorActions,
+  useIsActiveFile,
+} from "@/feature/editor/hooks/use-editor";
 
 import LoadingRow from "./loading-row";
 import CreateInput from "./create-input";
@@ -48,7 +51,8 @@ const Tree = ({
     parentId: item.parentId,
   });
 
-  const { openFile, closeTab, activeTabId } = useEditor(projectId);
+  const { openFile, closeTab } = useEditorActions(projectId);
+  const isActive = useIsActiveFile(projectId, item._id);
 
   const folderContents = useFolderContents({
     projectId,
@@ -90,7 +94,6 @@ const Tree = ({
 
   if (item.type === "file") {
     const fileName = item.name;
-    const isActive = activeTabId === item._id;
 
     if (isRenaming) {
       return (
@@ -238,4 +241,4 @@ const Tree = ({
   );
 };
 
-export default Tree;
+export default memo(Tree);
