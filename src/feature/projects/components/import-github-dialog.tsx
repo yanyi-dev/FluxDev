@@ -1,3 +1,5 @@
+"use client";
+
 import ky, { HTTPError } from "ky";
 import { z } from "zod";
 import { toast } from "sonner";

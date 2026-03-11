@@ -155,13 +155,13 @@ const Tree = ({
         </button>
         {isOpen && (
           <>
-            {folderContents === undefined && <LoadingRow level={0} />}
             <CreateInput
               type={creating}
               level={level + 1}
               onSubmit={handleCreate}
               onCancel={() => setCreating(null)}
             />
+            {folderContents === undefined && <LoadingRow level={0} />}
             {folderContents?.map((subItem) => (
               <Tree
                 key={subItem._id}

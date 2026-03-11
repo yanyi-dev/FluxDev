@@ -29,13 +29,13 @@ interface PreviewSettingsPopoverProps {
   initialValues?: Doc<"projects">["settings"];
   onSave?: () => void;
   onSubmittingChange?: (isSubmitting: boolean) => void;
-  restarting?: boolean;
+  isLoading?: boolean;
 }
 
 export const PreviewSettingsPopover = ({
   projectId,
   initialValues,
-  restarting,
+  isLoading,
   onSave,
   onSubmittingChange,
 }: PreviewSettingsPopoverProps) => {
@@ -149,12 +149,12 @@ export const PreviewSettingsPopover = ({
                   type="submit"
                   size="sm"
                   className="w-full"
-                  disabled={!canSubmit || isSubmitting || restarting}
+                  disabled={!canSubmit || isSubmitting || isLoading}
                 >
                   {isSubmitting
                     ? "Saving..."
-                    : restarting
-                      ? "Restarting..."
+                    : isLoading
+                      ? "Loading..."
                       : "Save Changes"}
                 </Button>
               )}

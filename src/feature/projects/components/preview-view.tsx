@@ -113,7 +113,7 @@ export const PreviewView = ({ projectId }: { projectId: Id<"projects"> }) => {
           projectId={projectId}
           initialValues={project?.settings}
           onSave={restart}
-          restarting={isLoading}
+          isLoading={isLoading}
           onSubmittingChange={setIsSaving}
         />
       </div>

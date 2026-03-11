@@ -108,7 +108,6 @@ const FileExplorer = ({ projectId }: { projectId: Id<"projects"> }) => {
         </div>
         {isOpen && (
           <>
-            {rootFiles === undefined && <LoadingRow level={0} />}
             {creating && (
               <CreateInput
                 type={creating}
@@ -117,6 +116,7 @@ const FileExplorer = ({ projectId }: { projectId: Id<"projects"> }) => {
                 onCancel={() => setCreating(null)}
               />
             )}
+            {rootFiles === undefined && <LoadingRow level={0} />}
             {rootFiles?.map((item) => (
               <Tree
                 key={`${item._id}-${collapseKey}`}
