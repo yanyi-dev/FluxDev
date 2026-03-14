@@ -111,7 +111,10 @@ export async function POST(request: Request) {
       .replace("{nextLines}", nextLines || "");
 
     const { output } = await generateText({
-      model: deepseek("deepseek-ai/DeepSeek-R1-0528-Qwen3-8B"),
+      model: deepseek(
+        process.env.SUGGEST_QUICK_AI_MODEL ??
+          "deepseek-ai/DeepSeek-R1-0528-Qwen3-8B",
+      ),
       output: Output.object({ schema: suggestionSchema }),
       prompt,
       abortSignal: request.signal,

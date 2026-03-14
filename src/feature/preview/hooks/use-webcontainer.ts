@@ -57,6 +57,10 @@ export const useWebContainer = ({
   const containerRef = useRef<WebContainer | null>(null);
   // 确保整个整个预览生命周期中，webcontainer只启动一次
   const hasStartedRef = useRef(false);
+  // 保存上一次的文件快照，用于差量对比
+  const prevFilesRef = useRef(
+    new Map<Id<"files">, { content: string | undefined; path: string }>(),
+  );
 
   const files = useFiles(projectId);
 
@@ -95,7 +99,7 @@ export const useWebContainer = ({
         const binaryFiles = files.filter(
           (f) => f.type === "file" && f.storageId,
         );
-        await Promise.all(
+        Promise.all(
           binaryFiles.map(async (file) => {
             // 拿到 storageUrl
             if (!file.storageUrl) {
@@ -168,19 +172,60 @@ export const useWebContainer = ({
     settings?.installCommand,
   ]);
 
-  // 同步文件更改(热加载)
+  // 文件更改 - 差量更新
   useEffect(() => {
     const container = containerRef.current;
     if (!container || !files || status !== "running") return;
 
-    const filesMap = new Map(files.map((f) => [f._id, f]));
+    const currentFilesMap = new Map(files.map((f) => [f._id, f]));
+    const prevSnapshot = prevFilesRef.current;
 
-    for (const file of files) {
-      if (file.type !== "file" || file.storageId || !file.content) continue;
-
-      const filePath = getFilePath(file, filesMap);
-      container.fs.writeFile(filePath, file.content);
+    // 处理删除
+    for (const [id, snapshot] of prevSnapshot) {
+      if (!currentFilesMap.has(id)) {
+        container.fs.rm(snapshot.path, { recursive: true }).catch(() => {});
+      }
     }
+
+    // 处理新增、内容修改、重命名
+    for (const file of files) {
+      if (file.storageId) continue;
+
+      const newPath = getFilePath(file, currentFilesMap);
+      const oldSnapshot = prevSnapshot.get(file._id);
+
+      if (!oldSnapshot) {
+        // 新增文件或文件夹
+        if (file.type === "folder") {
+          container.fs.mkdir(newPath, { recursive: true }).catch(() => {});
+        } else if (file.content !== undefined) {
+          container.fs.writeFile(newPath, file.content);
+        }
+      } else if (oldSnapshot.path !== newPath) {
+        // 路径变化（主要是重命名，因为本项目中不支持文件快捷移动）
+        container.fs.rm(oldSnapshot.path, { recursive: true }).catch(() => {});
+        if (file.type === "folder") {
+          container.fs.mkdir(newPath, { recursive: true }).catch(() => {});
+        } else if (file.content !== undefined) {
+          container.fs.writeFile(newPath, file.content);
+        }
+      } else if (
+        file.type === "file" &&
+        file.content !== undefined &&
+        oldSnapshot.content !== file.content
+      ) {
+        // 仅内容变化
+        container.fs.writeFile(newPath, file.content);
+      }
+    }
+
+    // 3. 更新快照
+    prevFilesRef.current = new Map(
+      files.map((f) => [
+        f._id,
+        { content: f.content, path: getFilePath(f, currentFilesMap) },
+      ]),
+    );
   }, [files, status]);
 
   // 初始化的时候，enable为true，清理函数被注册，并不会运行
